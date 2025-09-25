@@ -1,191 +1,194 @@
-
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>상담 일지 (사진 첨부)</title>
+<title>상담일지</title>
 <style>
 body {
-  font-family: 'Noto Sans KR', sans-serif;
-  margin:0; padding:0;
-  background:#f5f6fa;
-  display:flex; justify-content:center;
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #fff;
+    color: #000;
 }
-.container {
-  width:95%; max-width:700px;
-  background:#fff;
-  margin:20px; padding:20px;
-  border-radius:12px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+h1 {
+    text-align: center;
 }
-h1{text-align:center; margin-bottom:20px; color:#333;}
-label{
-  font-weight:bold; display:block; margin:10px 0 5px; color:#444;
+form {
+    display: flex;
+    flex-direction: column;
+    max-width: 800px;
+    margin: 0 auto;
 }
-input,textarea,select{
-  width:100%; padding:12px; border:1px solid #ccc; border-radius:6px; font-size:16px; box-sizing:border-box;
+label {
+    margin-top: 15px;
+    font-weight: bold;
 }
-textarea{min-height:120px; resize:vertical;}
-.controls{display:flex; justify-content:space-between; margin-top:10px;}
-.controls label{font-weight:normal;}
-button{
-  width:100%; padding:15px; margin-top:15px; border:none; background:#4CAF50; color:white; font-size:18px; border-radius:8px; cursor:pointer;
+input, select, textarea {
+    padding: 10px;
+    font-size: 16px;
+    margin-top: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
 }
-button:hover{background:#45a049;}
-.list{margin-top:30px;}
-.entry{
-  padding:15px; border:1px solid #ddd; border-radius:8px; margin-bottom:10px; background:#fafafa;
+textarea {
+    resize: vertical;
+    min-height: 100px;
+    max-height: 500px;
 }
-.entry h3{margin:0 0 10px; font-size:18px; color:#333;}
-.entry p{margin:4px 0; font-size:14px; color:#555;}
-.entry img{max-width:100%; margin-top:8px; border-radius:6px;}
-.entry button{
-  background:#f44336; font-size:14px; padding:8px 12px; width:auto; margin-top:8px; border:none; border-radius:6px; cursor:pointer;
+input[type="file"] {
+    padding: 3px;
 }
-.entry button:hover{background:#d32f2f;}
-@media (max-width:480px){
-  .container{margin:10px; padding:15px;}
-  input,textarea{font-size:14px;}
-  button{font-size:16px; padding:12px;}
+button {
+    margin-top: 20px;
+    padding: 12px;
+    font-size: 18px;
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+button:hover {
+    background-color: #0056b3;
+}
+#entries {
+    max-width: 800px;
+    margin: 20px auto 0;
+}
+.entry {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+.entry-title {
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #f2f2f2;
+    padding: 10px;
+    border-radius: 4px;
+}
+.entry-content {
+    display: none;
+    padding: 10px;
+}
+.entry-content img {
+    max-width: 100%;
+    height: auto;
+    margin-top: 10px;
+}
+@media (max-width: 600px) {
+    body { margin: 10px; }
+    input, select, textarea, button { font-size: 14px; }
 }
 </style>
 </head>
 <body>
-<div class="container">
-<h1>📋 상담 일지 (사진 첨부)</h1>
-<form id="logForm">
-  <label>상담일시</label>
-  <input type="datetime-local" name="상담일시">
+<h1>상담일지</h1>
+<form id="consultForm">
+    <label for="date">상담일시</label>
+    <input type="datetime-local" id="date" required>
 
-  <label>전화번호</label>
-  <input type="tel" name="전화번호" placeholder="010-1234-5678">
+    <label for="name">성함</label>
+    <input type="text" id="name" placeholder="이름 입력" required>
 
-  <label>설치주소</label>
-  <input type="text" name="설치주소">
+    <label for="phone">전화번호</label>
+    <input type="tel" id="phone" placeholder="010-xxxx-xxxx" required>
 
-  <label>설치장소</label>
-  <input type="text" name="설치장소">
+    <label for="address">설치주소</label>
+    <input type="text" id="address" placeholder="설치주소 입력" required>
 
-  <label>설치용량</label>
-  <input type="text" name="설치용량">
+    <label for="place">설치장소</label>
+    <input type="text" id="place" placeholder="설치장소 입력" required>
 
-  <label>설치면적</label>
-  <input type="text" name="설치면적">
+    <label for="capacity">설치용량</label>
+    <input type="text" id="capacity" placeholder="설치용량 입력" required>
 
-  <label>계약전력</label>
-  <input type="text" name="계약전력">
+    <label for="area">설치면적</label>
+    <input type="text" id="area" placeholder="설치면적 입력" required>
 
-  <label>세부 내용</label>
-  <textarea id="details" name="세부내용"></textarea>
+    <label for="contract">계약전력</label>
+    <input type="text" id="contract" placeholder="계약전력 입력" required>
 
-  <label>현장 사진 첨부</label>
-  <input type="file" id="photo" accept="image/*">
+    <label for="details">세부 내용</label>
+    <textarea id="details" placeholder="세부 내용 입력" required></textarea>
 
-  <div class="controls">
-    <label>글자 크기
-      <select id="fontSize">
-        <option value="14px">작게</option>
-        <option value="16px" selected>보통</option>
-        <option value="20px">크게</option>
-      </select>
-    </label>
-    <label>글꼴
-      <select id="fontFamily">
-        <option value="'Noto Sans KR', sans-serif">기본</option>
-        <option value="'Gulim', sans-serif">굴림</option>
-        <option value="'Batang', serif">바탕</option>
-      </select>
-    </label>
-  </div>
+    <label for="photos">사진 첨부</label>
+    <input type="file" id="photos" multiple accept="image/*">
 
-  <button type="button" onclick="saveEntry()">💾 상담일지 저장</button>
+    <button type="button" onclick="saveEntry()">저장</button>
 </form>
 
-<div class="list">
-<h2>📑 저장된 상담일지</h2>
+<h2>저장된 상담일지</h2>
 <div id="entries"></div>
-</div>
-</div>
 
 <script>
-// 글꼴 및 크기 조정
-const details = document.getElementById("details");
-document.getElementById("fontSize").addEventListener("change", e => details.style.fontSize=e.target.value);
-document.getElementById("fontFamily").addEventListener("change", e => details.style.fontFamily=e.target.value);
+function saveEntry() {
+    const date = document.getElementById('date').value;
+    const name = document.getElementById('name').value;
+    const phone = document.getElementById('phone').value;
+    const address = document.getElementById('address').value;
+    const place = document.getElementById('place').value;
+    const capacity = document.getElementById('capacity').value;
+    const area = document.getElementById('area').value;
+    const contract = document.getElementById('contract').value;
+    const details = document.getElementById('details').value;
+    const photosInput = document.getElementById('photos');
 
-// 상담일지 저장
-function saveEntry(){
-  const form=document.getElementById("logForm");
-  const data=new FormData(form);
-  let entry={};
-  data.forEach((v,k)=>{entry[k]=v;});
-  entry.id=Date.now();
-
-  // 사진 처리
-  const fileInput=document.getElementById("photo");
-  if(fileInput.files && fileInput.files[0]){
-    const reader=new FileReader();
-    reader.onload=function(e){
-      entry.photo=e.target.result;
-      storeEntry(entry);
+    if (!date || !name || !phone) {
+        alert('상담일시, 성함, 전화번호는 필수입니다.');
+        return;
     }
-    reader.readAsDataURL(fileInput.files[0]);
-  } else {
-    entry.photo=null;
-    storeEntry(entry);
-  }
-}
 
-// 저장 후 렌더링
-function storeEntry(entry){
-  let entries=JSON.parse(localStorage.getItem("entries"))||[];
-  entries.push(entry);
-  localStorage.setItem("entries",JSON.stringify(entries));
-  document.getElementById("logForm").reset();
-  renderEntries();
-}
+    const entryDiv = document.createElement('div');
+    entryDiv.className = 'entry';
 
-// 리스트 렌더링
-function renderEntries(){
-  const entriesDiv=document.getElementById("entries");
-  entriesDiv.innerHTML="";
-  let entries=JSON.parse(localStorage.getItem("entries"))||[];
-  entries.reverse().forEach(entry=>{
-    const div=document.createElement("div");
-    div.className="entry";
-    div.innerHTML=`
-      <h3>${entry["상담일시"]||"미입력"}</h3>
-      <p><b>전화번호:</b> ${entry["전화번호"]||""}</p>
-      <p><b>설치주소:</b> ${entry["설치주소"]||""}</p>
-      <p><b>설치장소:</b> ${entry["설치장소"]||""}</p>
-      <p><b>설치용량:</b> ${entry["설치용량"]||""}</p>
-      <p><b>설치면적:</b> ${entry["설치면적"]||""}</p>
-      <p><b>계약전력:</b> ${entry["계약전력"]||""}</p>
-      <p><b>세부내용:</b> ${entry["세부내용"]||""}</p>
-      ${entry.photo ? `<img src="${entry.photo}" alt="현장사진">` : ""}
-      <button onclick="deleteEntry(${entry.id})">🗑 삭제</button>
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'entry-title';
+    titleDiv.textContent = address;
+    entryDiv.appendChild(titleDiv);
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'entry-content';
+    contentDiv.innerHTML = `
+        <strong>상담일시:</strong> ${date}<br>
+        <strong>성함:</strong> ${name}<br>
+        <strong>전화번호:</strong> ${phone}<br>
+        <strong>설치장소:</strong> ${place}<br>
+        <strong>설치용량:</strong> ${capacity}<br>
+        <strong>설치면적:</strong> ${area}<br>
+        <strong>계약전력:</strong> ${contract}<br>
+        <strong>세부 내용:</strong> ${details}<br>
     `;
-    entriesDiv.appendChild(div);
-  });
-}
+    entryDiv.appendChild(contentDiv);
 
-// 삭제
-function deleteEntry(id){
-  let entries=JSON.parse(localStorage.getItem("entries"))||[];
-  entries=entries.filter(e=>e.id!==id);
-  localStorage.setItem("entries",JSON.stringify(entries));
-  renderEntries();
-}
+    // 사진 첨부
+    if (photosInput.files.length > 0) {
+        for (let i = 0; i < photosInput.files.length; i++) {
+            const file = photosInput.files[i];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                contentDiv.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
 
-// 초기 렌더링
-renderEntries();
+    // 클릭하면 펼치기/접기
+    titleDiv.addEventListener('click', () => {
+        if (contentDiv.style.display === 'none' || contentDiv.style.display === '') {
+            contentDiv.style.display = 'block';
+        } else {
+            contentDiv.style.display = 'none';
+        }
+    });
 
-// 간단한 PWA 기능
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
-    self.addEventListener('install',e=>{e.waitUntil(caches.open('cache-v1').then(c=>c.addAll([])))});
-    self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)))});
-  `],{type:'text/javascript'})));
+    document.getElementById('entries').prepend(entryDiv);
+    document.getElementById('consultForm').reset();
 }
 </script>
 </body>
