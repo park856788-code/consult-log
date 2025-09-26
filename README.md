@@ -4,21 +4,32 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>상담일지 관리</title>
+
+<!-- PWA -->
+<link rel="manifest" href="data:application/json,{}">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="상담일지">
+<meta name="theme-color" content="#007bff">
+<link rel="icon" href="data:image/png;base64,iVBORw0KGgo=">
+
+<!-- html2pdf -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 <style>
-body { font-family: 'Nanum Gothic', Arial, sans-serif; margin:0; padding:20px; background:#f4f6f9; }
+body { font-family: 'Nanum Gothic', Arial, sans-serif; margin:0; padding:20px; background:#f4f6f9; font-size:15px;}
 h1 { text-align:center; color:#333; }
 form { background:#fff; padding:15px; margin-bottom:20px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1);}
 label { display:block; margin:8px 0 4px; font-weight:bold; }
-input, textarea, button { width:100%; padding:10px; margin-bottom:12px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box; }
-textarea { resize:vertical; min-height:120px; max-height:400px; font-size:15px; }
+input, textarea, button { width:100%; padding:10px; margin-bottom:12px; border:1px solid #ccc; border-radius:6px; font-size:15px; box-sizing:border-box; }
+textarea { resize:vertical; min-height:120px; max-height:400px; }
 button { background:#007bff; color:#fff; cursor:pointer; font-weight:bold; }
 button:hover { background:#0056b3; }
 .list { list-style:none; padding:0; }
 .list li { background:#fff; margin-bottom:10px; padding:15px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.1);}
 .list h3 { margin:0 0 8px; color:#007bff; cursor:pointer; display:flex; justify-content:space-between; align-items:center;}
 .actions button { width:auto; margin-left:5px; padding:5px 10px; font-size:13px; }
-.entry-content { display:none; font-family: 'Nanum Gothic', Arial, sans-serif; font-size:15px;}
+.entry-content { display:none;}
 .entry-content img { max-width:100%; height:auto; margin-top:8px; border-radius:4px; }
 @media(max-width:600px){ body{padding:10px;} form, .list li{padding:12px;} }
 </style>
@@ -67,7 +78,6 @@ const naverBtn=document.getElementById('naverBtn');
 let logs=JSON.parse(localStorage.getItem('logs'))||[];
 let editIndex=null;
 
-// 자동 저장 (5초마다)
 setInterval(()=>{
     localStorage.setItem('draft', JSON.stringify({
         datetime: datetimeInput.value,
@@ -78,7 +88,6 @@ setInterval(()=>{
     }));
 },5000);
 
-// 임시 저장 불러오기
 const draft=JSON.parse(localStorage.getItem('draft'));
 if(draft){
     datetimeInput.value=draft.datetime||'';
@@ -88,7 +97,6 @@ if(draft){
     contentInput.value=draft.content||'';
 }
 
-// 화면 렌더
 function renderLogs(){
     logList.innerHTML='';
     logs.forEach((log,index)=>{
@@ -117,7 +125,6 @@ function renderLogs(){
     });
 }
 
-// 수정
 window.editLog=function(index){
     const log=logs[index];
     datetimeInput.value=log.datetime||'';
@@ -128,7 +135,6 @@ window.editLog=function(index){
     editIndex=index;
 };
 
-// 삭제
 window.deleteLog=function(index){
     if(confirm("정말 삭제하시겠습니까?")){
         logs.splice(index,1);
@@ -137,7 +143,6 @@ window.deleteLog=function(index){
     }
 };
 
-// 저장
 form.addEventListener('submit',e=>{
     e.preventDefault();
     const datetime=datetimeInput.value || new Date().toISOString().slice(0,16);
@@ -146,9 +151,7 @@ form.addEventListener('submit',e=>{
     const phone=phoneInput.value.trim();
     const content=contentInput.value.trim();
     const files=Array.from(photosInput.files);
-
     if(!site||!address||!phone||!content) return alert('모든 필드를 입력해주세요.');
-
     const photos=[];
     if(files.length===0) finalizeEntry();
     else{
@@ -174,19 +177,17 @@ form.addEventListener('submit',e=>{
             reader.readAsDataURL(file);
         });
     }
-
     function finalizeEntry(){
-        const log={datetime,site,address,phone,content,fontSize:'15px',photos};
+        const log={datetime,site,address,phone,content,photos};
         if(editIndex===null) logs.unshift(log);
         else{ logs[editIndex]=log; editIndex=null; }
         localStorage.setItem('logs',JSON.stringify(logs));
-        localStorage.removeItem('draft'); // 임시 저장 삭제
+        localStorage.removeItem('draft');
         renderLogs();
         form.reset();
     }
 });
 
-// PDF 생성
 pdfBtn.addEventListener('click',()=>{
     if(logs.length===0)return alert("저장된 상담일지가 없습니다.");
     const element = document.createElement('div');
@@ -212,12 +213,10 @@ pdfBtn.addEventListener('click',()=>{
     }).save();
 });
 
-// 네이버 마이박스 열기
 naverBtn.addEventListener('click',()=>{
     window.open('https://nid.naver.com/nidlogin.login', '_blank');
 });
 
-// 초기 렌더
 renderLogs();
 </script>
 </body>
