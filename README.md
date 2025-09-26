@@ -27,6 +27,9 @@ button:hover { background:#0056b3; }
 <h1>상담일지 관리</h1>
 
 <form id="logForm">
+<label for="datetime">상담일시</label>
+<input type="datetime-local" id="datetime">
+
 <label for="site">설치 위치</label>
 <input type="text" id="site" required>
 
@@ -51,6 +54,7 @@ button:hover { background:#0056b3; }
 
 <script>
 const form=document.getElementById('logForm');
+const datetimeInput=document.getElementById('datetime');
 const siteInput=document.getElementById('site');
 const addressInput=document.getElementById('address');
 const phoneInput=document.getElementById('phone');
@@ -66,6 +70,7 @@ let editIndex=null;
 // 자동 저장 (5초마다)
 setInterval(()=>{
     localStorage.setItem('draft', JSON.stringify({
+        datetime: datetimeInput.value,
         site: siteInput.value,
         address: addressInput.value,
         phone: phoneInput.value,
@@ -76,6 +81,7 @@ setInterval(()=>{
 // 임시 저장 불러오기
 const draft=JSON.parse(localStorage.getItem('draft'));
 if(draft){
+    datetimeInput.value=draft.datetime||'';
     siteInput.value=draft.site||'';
     addressInput.value=draft.address||'';
     phoneInput.value=draft.phone||'';
@@ -89,7 +95,7 @@ function renderLogs(){
         const li=document.createElement('li');
         li.innerHTML=`
         <h3>
-            ${log.site} (${log.address})
+            ${log.site} (${log.address}) - ${log.datetime || ''}
             <span>
                 <button onclick="editLog(${index})">수정</button>
                 <button onclick="deleteLog(${index})">삭제</button>
@@ -114,6 +120,7 @@ function renderLogs(){
 // 수정
 window.editLog=function(index){
     const log=logs[index];
+    datetimeInput.value=log.datetime||'';
     siteInput.value=log.site;
     addressInput.value=log.address;
     phoneInput.value=log.phone;
@@ -133,6 +140,7 @@ window.deleteLog=function(index){
 // 저장
 form.addEventListener('submit',e=>{
     e.preventDefault();
+    const datetime=datetimeInput.value || new Date().toISOString().slice(0,16);
     const site=siteInput.value.trim();
     const address=addressInput.value.trim();
     const phone=phoneInput.value.trim();
@@ -168,7 +176,7 @@ form.addEventListener('submit',e=>{
     }
 
     function finalizeEntry(){
-        const log={site,address,phone,content,fontSize:'15px',photos};
+        const log={datetime,site,address,phone,content,fontSize:'15px',photos};
         if(editIndex===null) logs.unshift(log);
         else{ logs[editIndex]=log; editIndex=null; }
         localStorage.setItem('logs',JSON.stringify(logs));
@@ -178,7 +186,7 @@ form.addEventListener('submit',e=>{
     }
 });
 
-// PDF 생성 (이미지 용량 최적화 + 페이지 분할)
+// PDF 생성
 pdfBtn.addEventListener('click',()=>{
     if(logs.length===0)return alert("저장된 상담일지가 없습니다.");
     const element = document.createElement('div');
@@ -186,6 +194,7 @@ pdfBtn.addEventListener('click',()=>{
         const div=document.createElement('div');
         div.style.marginBottom='15px';
         div.innerHTML=`
+        <p><strong>상담일시:</strong> ${log.datetime}</p>
         <p><strong>설치 위치:</strong> ${log.site}</p>
         <p><strong>설치 주소:</strong> ${log.address}</p>
         <p><strong>연락처:</strong> ${log.phone}</p>
