@@ -4,21 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>상담일지 관리</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
-body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f4f6f9; }
+body { font-family: 'Nanum Gothic', Arial, sans-serif; margin:0; padding:20px; background:#f4f6f9; }
 h1 { text-align:center; color:#333; }
 form { background:#fff; padding:15px; margin-bottom:20px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1);}
 label { display:block; margin:8px 0 4px; font-weight:bold; }
 input, textarea, select, button { width:100%; padding:10px; margin-bottom:12px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box; }
-textarea { resize:vertical; min-height:80px; max-height:300px; }
+textarea { resize:vertical; min-height:120px; max-height:400px; }
 button { background:#007bff; color:#fff; cursor:pointer; font-weight:bold; }
 button:hover { background:#0056b3; }
 .list { list-style:none; padding:0; }
 .list li { background:#fff; margin-bottom:10px; padding:15px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.1);}
 .list h3 { margin:0 0 8px; color:#007bff; cursor:pointer; display:flex; justify-content:space-between; align-items:center;}
 .actions button { width:auto; margin-left:5px; padding:5px 10px; font-size:13px; }
-.entry-content { display:none; }
+.entry-content { display:none; font-family: 'Nanum Gothic', Arial, sans-serif;}
 .entry-content img { max-width:100%; height:auto; margin-top:8px; border-radius:4px; }
 @media(max-width:600px){ body{padding:10px;} form, .list li{padding:12px;} }
 </style>
@@ -52,6 +52,7 @@ button:hover { background:#0056b3; }
 
 <button type="submit">저장</button>
 <button type="button" id="pdfBtn">PDF로 저장</button>
+<button type="button" id="naverBtn">네이버 마이박스 열기</button>
 </form>
 
 <ul class="list" id="logList"></ul>
@@ -66,6 +67,7 @@ const fontSizeInput=document.getElementById('fontSize');
 const photosInput=document.getElementById('photos');
 const logList=document.getElementById('logList');
 const pdfBtn=document.getElementById('pdfBtn');
+const naverBtn=document.getElementById('naverBtn');
 
 let logs=JSON.parse(localStorage.getItem('logs'))||[];
 let editIndex=null;
@@ -189,56 +191,22 @@ form.addEventListener('submit',e=>{
     }
 });
 
-// PDF 생성
+// PDF 생성 (html2pdf.js 사용)
 pdfBtn.addEventListener('click',()=>{
     if(logs.length===0)return alert("저장된 상담일지가 없습니다.");
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    let y=10;
-    const pageHeight = doc.internal.pageSize.getHeight();
+    const element = document.getElementById('logList');
+    html2pdf().from(element).set({
+        margin:10,
+        filename:'상담일지.pdf',
+        image:{type:'jpeg', quality:0.8},
+        html2canvas:{scale:2},
+        jsPDF:{unit:'mm', format:'a4', orientation:'portrait'}
+    }).save();
+});
 
-    function addImageToDoc(imgSrc, callback){
-        const img=new Image();
-        img.src=imgSrc;
-        img.onload=function(){
-            let w=doc.internal.pageSize.getWidth()-20;
-            let h=(img.height/img.width)*w;
-            if(y+h>pageHeight){ doc.addPage(); y=10; }
-            doc.addImage(img,'JPEG',10,y,w,h);
-            y+=h+10;
-            callback();
-        }
-    }
-
-    function processLogs(i){
-        if(i>=logs.length){
-            doc.save('상담일지.pdf');
-            return;
-        }
-        const log=logs[i];
-        doc.setFontSize(16);
-        doc.text(`설치 위치: ${log.site}`,10,y); y+=8;
-        doc.setFontSize(14);
-        doc.text(`설치 주소: ${log.address}`,10,y); y+=8;
-        doc.text(`연락처: ${log.phone}`,10,y); y+=8;
-        doc.text(`상담 내용: ${log.content}`,10,y); y+=10;
-
-        let photoIndex=0;
-        function addNextPhoto(){
-            if(photoIndex>=log.photos.length){
-                y+=10;
-                processLogs(i+1);
-                return;
-            }
-            addImageToDoc(log.photos[photoIndex], ()=>{
-                photoIndex++;
-                addNextPhoto();
-            });
-        }
-        addNextPhoto();
-    }
-
-    processLogs(0);
+// 네이버 마이박스 열기
+naverBtn.addEventListener('click',()=>{
+    window.open('https://nid.naver.com/nidlogin.login', '_blank');
 });
 
 // 초기 렌더
