@@ -3,221 +3,173 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>상담일지 관리</title>
-
-<!-- PWA -->
-<link rel="manifest" href="data:application/json,{}">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="상담일지">
-<meta name="theme-color" content="#007bff">
-<link rel="icon" href="data:image/png;base64,iVBORw0KGgo=">
-
-<!-- html2pdf -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
+<title>상담일지</title>
 <style>
-body { font-family: 'Nanum Gothic', Arial, sans-serif; margin:0; padding:20px; background:#f4f6f9; font-size:15px;}
-h1 { text-align:center; color:#333; }
-form { background:#fff; padding:15px; margin-bottom:20px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1);}
-label { display:block; margin:8px 0 4px; font-weight:bold; }
-input, textarea, button { width:100%; padding:10px; margin-bottom:12px; border:1px solid #ccc; border-radius:6px; font-size:15px; box-sizing:border-box; }
-textarea { resize:vertical; min-height:120px; max-height:400px; }
-button { background:#007bff; color:#fff; cursor:pointer; font-weight:bold; }
-button:hover { background:#0056b3; }
-.list { list-style:none; padding:0; }
-.list li { background:#fff; margin-bottom:10px; padding:15px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.1);}
-.list h3 { margin:0 0 8px; color:#007bff; cursor:pointer; display:flex; justify-content:space-between; align-items:center;}
-.actions button { width:auto; margin-left:5px; padding:5px 10px; font-size:13px; }
-.entry-content { display:none;}
-.entry-content img { max-width:100%; height:auto; margin-top:8px; border-radius:4px; }
-@media(max-width:600px){ body{padding:10px;} form, .list li{padding:12px;} }
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+
+body { font-family: 'Noto Sans KR', sans-serif; margin:0; padding:20px; background:#f9f9f9;}
+h1{text-align:center;}
+label{display:block;margin-top:10px;}
+input,textarea{width:100%;padding:8px;margin-top:4px;box-sizing:border-box;font-size:15px;}
+textarea{min-height:100px;}
+button{margin-top:15px;padding:10px 20px;font-size:15px;}
+#records{margin-top:30px;}
+.record{border:1px solid #ccc;padding:10px;margin-bottom:10px;background:#fff;}
+.record img{max-width:100%;height:auto;margin-top:10px;}
 </style>
 </head>
 <body>
-<h1>상담일지 관리</h1>
 
-<form id="logForm">
-<label for="datetime">상담일시</label>
-<input type="datetime-local" id="datetime">
+<h1>상담일지</h1>
 
-<label for="site">설치 위치</label>
-<input type="text" id="site" required>
-
-<label for="address">설치 주소</label>
-<input type="text" id="address" required>
-
-<label for="phone">연락처</label>
-<input type="text" id="phone" required>
-
-<label for="content">상담 내용</label>
-<textarea id="content" required></textarea>
-
-<label for="photos">사진 첨부</label>
-<input type="file" id="photos" multiple accept="image/*">
-
-<button type="submit">저장</button>
-<button type="button" id="pdfBtn">PDF로 저장</button>
-<button type="button" id="naverBtn">네이버 마이박스 열기</button>
+<form id="form">
+  <label>상담일시<input type="datetime-local" id="dateTime" required></label>
+  <label>전화번호<input type="text" id="phone" required></label>
+  <label>설치주소<input type="text" id="address" required></label>
+  <label>설치장소<input type="text" id="place" required></label>
+  <label>설치용량<input type="text" id="capacity" required></label>
+  <label>설치면적<input type="text" id="area" required></label>
+  <label>계약전력<input type="text" id="power" required></label>
+  <label>세부 내용<textarea id="details" required></textarea></label>
+  <label>사진 첨부<input type="file" id="photo" accept="image/*" multiple></label>
+  <button type="submit">추가/수정</button>
+  <button type="button" id="download">PDF 생성</button>
+  <button type="button" id="email">이메일 전송</button>
 </form>
 
-<ul class="list" id="logList"></ul>
+<div id="records"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
-const form=document.getElementById('logForm');
-const datetimeInput=document.getElementById('datetime');
-const siteInput=document.getElementById('site');
-const addressInput=document.getElementById('address');
-const phoneInput=document.getElementById('phone');
-const contentInput=document.getElementById('content');
-const photosInput=document.getElementById('photos');
-const logList=document.getElementById('logList');
-const pdfBtn=document.getElementById('pdfBtn');
-const naverBtn=document.getElementById('naverBtn');
+let records = JSON.parse(localStorage.getItem('records') || '[]');
+const form = document.getElementById('form');
+const recordsDiv = document.getElementById('records');
+let editIndex = -1;
 
-let logs=JSON.parse(localStorage.getItem('logs'))||[];
-let editIndex=null;
+function saveRecords() { localStorage.setItem('records', JSON.stringify(records)); }
 
-setInterval(()=>{
-    localStorage.setItem('draft', JSON.stringify({
-        datetime: datetimeInput.value,
-        site: siteInput.value,
-        address: addressInput.value,
-        phone: phoneInput.value,
-        content: contentInput.value
-    }));
-},5000);
-
-const draft=JSON.parse(localStorage.getItem('draft'));
-if(draft){
-    datetimeInput.value=draft.datetime||'';
-    siteInput.value=draft.site||'';
-    addressInput.value=draft.address||'';
-    phoneInput.value=draft.phone||'';
-    contentInput.value=draft.content||'';
+function renderRecords() {
+  recordsDiv.innerHTML = '';
+  records.forEach((r, idx) => {
+    const div = document.createElement('div');
+    div.className = 'record';
+    div.innerHTML = `
+      <strong>${r.address}</strong> (${r.dateTime})<br>
+      전화번호: ${r.phone}<br>
+      설치장소: ${r.place}<br>
+      설치용량: ${r.capacity}<br>
+      설치면적: ${r.area}<br>
+      계약전력: ${r.power}<br>
+      세부 내용: ${r.details}<br>
+      ${r.photos.map(p=>`<img src="${p}">`).join('')}
+      <button onclick="editRecord(${idx})">수정</button>
+      <button onclick="deleteRecord(${idx})">삭제</button>
+    `;
+    recordsDiv.appendChild(div);
+  });
 }
 
-function renderLogs(){
-    logList.innerHTML='';
-    logs.forEach((log,index)=>{
-        const li=document.createElement('li');
-        li.innerHTML=`
-        <h3>
-            ${log.site} (${log.address}) - ${log.datetime || ''}
-            <span>
-                <button onclick="editLog(${index})">수정</button>
-                <button onclick="deleteLog(${index})">삭제</button>
-            </span>
-        </h3>
-        <div class="entry-content">
-            <p><strong>연락처:</strong> ${log.phone}</p>
-            <p>${log.content}</p>
-            ${log.photos.map(src=>`<img src="${src}">`).join('')}
-        </div>`;
-        const header=li.querySelector('h3');
-        const contentDiv=li.querySelector('.entry-content');
-        header.addEventListener('click',e=>{
-            if(!e.target.closest('button')){
-                contentDiv.style.display=contentDiv.style.display==='block'?'none':'block';
-            }
-        });
-        logList.appendChild(li);
-    });
+function editRecord(idx){
+  editIndex = idx;
+  const r = records[idx];
+  document.getElementById('dateTime').value = r.dateTime;
+  document.getElementById('phone').value = r.phone;
+  document.getElementById('address').value = r.address;
+  document.getElementById('place').value = r.place;
+  document.getElementById('capacity').value = r.capacity;
+  document.getElementById('area').value = r.area;
+  document.getElementById('power').value = r.power;
+  document.getElementById('details').value = r.details;
 }
 
-window.editLog=function(index){
-    const log=logs[index];
-    datetimeInput.value=log.datetime||'';
-    siteInput.value=log.site;
-    addressInput.value=log.address;
-    phoneInput.value=log.phone;
-    contentInput.value=log.content;
-    editIndex=index;
-};
+function deleteRecord(idx){
+  records.splice(idx,1);
+  saveRecords();
+  renderRecords();
+}
 
-window.deleteLog=function(index){
-    if(confirm("정말 삭제하시겠습니까?")){
-        logs.splice(index,1);
-        localStorage.setItem('logs',JSON.stringify(logs));
-        renderLogs();
-    }
-};
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const files = Array.from(document.getElementById('photo').files);
+  const photos = await Promise.all(files.map(file => new Promise(res=>{
+    const reader = new FileReader();
+    reader.onload = ()=>res(reader.result);
+    reader.readAsDataURL(file);
+  })));
 
-form.addEventListener('submit',e=>{
-    e.preventDefault();
-    const datetime=datetimeInput.value || new Date().toISOString().slice(0,16);
-    const site=siteInput.value.trim();
-    const address=addressInput.value.trim();
-    const phone=phoneInput.value.trim();
-    const content=contentInput.value.trim();
-    const files=Array.from(photosInput.files);
-    if(!site||!address||!phone||!content) return alert('모든 필드를 입력해주세요.');
-    const photos=[];
-    if(files.length===0) finalizeEntry();
-    else{
-        let count=0;
-        files.forEach(file=>{
-            const reader=new FileReader();
-            reader.onload=e=>{
-                const img=new Image();
-                img.src=e.target.result;
-                img.onload=function(){
-                    const canvas=document.createElement('canvas');
-                    const MAX_WIDTH=800;
-                    const scale=Math.min(MAX_WIDTH/img.width,1);
-                    canvas.width=img.width*scale;
-                    canvas.height=img.height*scale;
-                    const ctx=canvas.getContext('2d');
-                    ctx.drawImage(img,0,0,canvas.width,canvas.height);
-                    photos.push(canvas.toDataURL('image/jpeg',0.7));
-                    count++;
-                    if(count===files.length) finalizeEntry();
-                }
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-    function finalizeEntry(){
-        const log={datetime,site,address,phone,content,photos};
-        if(editIndex===null) logs.unshift(log);
-        else{ logs[editIndex]=log; editIndex=null; }
-        localStorage.setItem('logs',JSON.stringify(logs));
-        localStorage.removeItem('draft');
-        renderLogs();
-        form.reset();
-    }
+  const record = {
+    dateTime: document.getElementById('dateTime').value,
+    phone: document.getElementById('phone').value,
+    address: document.getElementById('address').value,
+    place: document.getElementById('place').value,
+    capacity: document.getElementById('capacity').value,
+    area: document.getElementById('area').value,
+    power: document.getElementById('power').value,
+    details: document.getElementById('details').value,
+    photos: photos
+  };
+
+  if(editIndex>=0){
+    records[editIndex] = record;
+    editIndex = -1;
+  } else records.push(record);
+
+  saveRecords();
+  renderRecords();
+  form.reset();
 });
 
-pdfBtn.addEventListener('click',()=>{
-    if(logs.length===0)return alert("저장된 상담일지가 없습니다.");
-    const element = document.createElement('div');
-    logs.forEach(log=>{
-        const div=document.createElement('div');
-        div.style.marginBottom='15px';
-        div.innerHTML=`
-        <p><strong>상담일시:</strong> ${log.datetime}</p>
-        <p><strong>설치 위치:</strong> ${log.site}</p>
-        <p><strong>설치 주소:</strong> ${log.address}</p>
-        <p><strong>연락처:</strong> ${log.phone}</p>
-        <p>${log.content}</p>
-        ${log.photos.map(src=>`<img src="${src}" style="max-width:500px;margin-top:5px;">`).join('')}
-        <hr>`;
-        element.appendChild(div);
+function generatePDF(callback){
+  if(records.length===0){ alert('기록이 없습니다.'); return; }
+  const element = document.createElement('div');
+  element.style.fontFamily="'Noto Sans KR', sans-serif";
+  element.style.fontSize='15px';
+  records.forEach(r=>{
+    const div=document.createElement('div');
+    div.style.border='1px solid #ccc';
+    div.style.padding='10px';
+    div.style.marginBottom='10px';
+    div.style.background='#fff';
+    div.innerHTML=`
+      <strong>${r.address}</strong> (${r.dateTime})<br>
+      전화번호: ${r.phone}<br>
+      설치장소: ${r.place}<br>
+      설치용량: ${r.capacity}<br>
+      설치면적: ${r.area}<br>
+      계약전력: ${r.power}<br>
+      세부 내용: ${r.details}<br>
+    `;
+    r.photos.forEach(p=>{
+      const img=document.createElement('img');
+      img.src=p;
+      img.style.maxWidth='180mm';
+      img.style.height='auto';
+      img.style.marginTop='5px';
+      div.appendChild(img);
     });
-    html2pdf().from(element).set({
-        margin:10,
-        filename:'상담일지.pdf',
-        image:{type:'jpeg', quality:0.7},
-        html2canvas:{scale:2, useCORS:true},
-        jsPDF:{unit:'mm', format:'a4', orientation:'portrait'}
-    }).save();
+    element.appendChild(div);
+  });
+  const opt={margin:10, filename:'상담일지.pdf', image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2,useCORS:true}, jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}};
+  html2pdf().set(opt).from(element).save().then(()=>{ if(callback) callback(); });
+}
+
+// PDF 생성 버튼
+document.getElementById('download').addEventListener('click',()=>generatePDF());
+
+// 이메일 전송 버튼
+document.getElementById('email').addEventListener('click',()=>{
+  generatePDF(()=>{
+    // PDF 다운로드 안내
+    alert("PDF가 생성되었습니다. PDF를 첨부하여 'dh_com@naver.com'으로 이메일을 보내주세요.");
+    // mailto 링크 생성
+    const subject = encodeURIComponent("상담일지 전송");
+    const body = encodeURIComponent("안녕하세요,\n첨부된 상담일지를 확인해주세요.");
+    window.location.href = `mailto:dh_com@naver.com?subject=${subject}&body=${body}`;
+  });
 });
 
-naverBtn.addEventListener('click',()=>{
-    window.open('https://nid.naver.com/nidlogin.login', '_blank');
-});
-
-renderLogs();
+renderRecords();
 </script>
+
 </body>
 </html>
