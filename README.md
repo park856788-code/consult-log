@@ -10,15 +10,15 @@ body { font-family: 'Nanum Gothic', Arial, sans-serif; margin:0; padding:20px; b
 h1 { text-align:center; color:#333; }
 form { background:#fff; padding:15px; margin-bottom:20px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1);}
 label { display:block; margin:8px 0 4px; font-weight:bold; }
-input, textarea, select, button { width:100%; padding:10px; margin-bottom:12px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box; }
-textarea { resize:vertical; min-height:120px; max-height:400px; }
+input, textarea, button { width:100%; padding:10px; margin-bottom:12px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box; }
+textarea { resize:vertical; min-height:120px; max-height:400px; font-size:15px; }
 button { background:#007bff; color:#fff; cursor:pointer; font-weight:bold; }
 button:hover { background:#0056b3; }
 .list { list-style:none; padding:0; }
 .list li { background:#fff; margin-bottom:10px; padding:15px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.1);}
 .list h3 { margin:0 0 8px; color:#007bff; cursor:pointer; display:flex; justify-content:space-between; align-items:center;}
 .actions button { width:auto; margin-left:5px; padding:5px 10px; font-size:13px; }
-.entry-content { display:none; font-family: 'Nanum Gothic', Arial, sans-serif;}
+.entry-content { display:none; font-family: 'Nanum Gothic', Arial, sans-serif; font-size:15px;}
 .entry-content img { max-width:100%; height:auto; margin-top:8px; border-radius:4px; }
 @media(max-width:600px){ body{padding:10px;} form, .list li{padding:12px;} }
 </style>
@@ -39,14 +39,6 @@ button:hover { background:#0056b3; }
 <label for="content">상담 내용</label>
 <textarea id="content" required></textarea>
 
-<label for="fontSize">글자 크기</label>
-<select id="fontSize">
-<option value="14px">14px</option>
-<option value="16px" selected>16px</option>
-<option value="18px">18px</option>
-<option value="20px">20px</option>
-</select>
-
 <label for="photos">사진 첨부</label>
 <input type="file" id="photos" multiple accept="image/*">
 
@@ -63,7 +55,6 @@ const siteInput=document.getElementById('site');
 const addressInput=document.getElementById('address');
 const phoneInput=document.getElementById('phone');
 const contentInput=document.getElementById('content');
-const fontSizeInput=document.getElementById('fontSize');
 const photosInput=document.getElementById('photos');
 const logList=document.getElementById('logList');
 const pdfBtn=document.getElementById('pdfBtn');
@@ -78,8 +69,7 @@ setInterval(()=>{
         site: siteInput.value,
         address: addressInput.value,
         phone: phoneInput.value,
-        content: contentInput.value,
-        fontSize: fontSizeInput.value
+        content: contentInput.value
     }));
 },5000);
 
@@ -90,7 +80,6 @@ if(draft){
     addressInput.value=draft.address||'';
     phoneInput.value=draft.phone||'';
     contentInput.value=draft.content||'';
-    fontSizeInput.value=draft.fontSize||'16px';
 }
 
 // 화면 렌더
@@ -106,7 +95,7 @@ function renderLogs(){
                 <button onclick="deleteLog(${index})">삭제</button>
             </span>
         </h3>
-        <div class="entry-content" style="font-size:${log.fontSize}">
+        <div class="entry-content">
             <p><strong>연락처:</strong> ${log.phone}</p>
             <p>${log.content}</p>
             ${log.photos.map(src=>`<img src="${src}">`).join('')}
@@ -129,7 +118,6 @@ window.editLog=function(index){
     addressInput.value=log.address;
     phoneInput.value=log.phone;
     contentInput.value=log.content;
-    fontSizeInput.value=log.fontSize;
     editIndex=index;
 };
 
@@ -149,7 +137,6 @@ form.addEventListener('submit',e=>{
     const address=addressInput.value.trim();
     const phone=phoneInput.value.trim();
     const content=contentInput.value.trim();
-    const fontSize=fontSizeInput.value;
     const files=Array.from(photosInput.files);
 
     if(!site||!address||!phone||!content) return alert('모든 필드를 입력해주세요.');
@@ -181,7 +168,7 @@ form.addEventListener('submit',e=>{
     }
 
     function finalizeEntry(){
-        const log={site,address,phone,content,fontSize,photos};
+        const log={site,address,phone,content,fontSize:'15px',photos};
         if(editIndex===null) logs.unshift(log);
         else{ logs[editIndex]=log; editIndex=null; }
         localStorage.setItem('logs',JSON.stringify(logs));
@@ -191,15 +178,27 @@ form.addEventListener('submit',e=>{
     }
 });
 
-// PDF 생성 (html2pdf.js 사용)
+// PDF 생성 (이미지 용량 최적화 + 페이지 분할)
 pdfBtn.addEventListener('click',()=>{
     if(logs.length===0)return alert("저장된 상담일지가 없습니다.");
-    const element = document.getElementById('logList');
+    const element = document.createElement('div');
+    logs.forEach(log=>{
+        const div=document.createElement('div');
+        div.style.marginBottom='15px';
+        div.innerHTML=`
+        <p><strong>설치 위치:</strong> ${log.site}</p>
+        <p><strong>설치 주소:</strong> ${log.address}</p>
+        <p><strong>연락처:</strong> ${log.phone}</p>
+        <p>${log.content}</p>
+        ${log.photos.map(src=>`<img src="${src}" style="max-width:500px;margin-top:5px;">`).join('')}
+        <hr>`;
+        element.appendChild(div);
+    });
     html2pdf().from(element).set({
         margin:10,
         filename:'상담일지.pdf',
-        image:{type:'jpeg', quality:0.8},
-        html2canvas:{scale:2},
+        image:{type:'jpeg', quality:0.7},
+        html2canvas:{scale:2, useCORS:true},
         jsPDF:{unit:'mm', format:'a4', orientation:'portrait'}
     }).save();
 });
